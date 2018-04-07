@@ -11,6 +11,9 @@ $(OBJ)/%.o: $(SRC)/%.f08
 $(OBJ)/%.mod: $(OBJ)/%.o
 	echo "Need " $@ " so compile " $<
 
+$(OBJ)/rng.o: $(SRC)/rng.f08 $(OBJ)/const.mod
+	$(COMPILE) -c $< -o $@
+
 $(OBJ)/pretty_print.o: $(SRC)/pretty_print.f08 $(OBJ)/const.mod
 	$(COMPILE) -c $< -o $@
 
@@ -23,8 +26,12 @@ $(OBJ)/test_brkga.o: $(SRC)/test_brkga.f08 $(OBJ)/const.mod $(OBJ)/check_util.mo
 $(BIN)/test_brkga: $(OBJ)/test_brkga.o $(OBJ)/const.o $(OBJ)/check_util.o $(OBJ)/pretty_print.o $(OBJ)/brkga.o
 	$(LINK) $^ -o $@
 
-test: $(BIN)/test_brkga
+$(BIN)/test_rng: $(OBJ)/test_rng.o $(OBJ)/const.o
+	$(LINK) $^ -o $@
+
+test: $(BIN)/test_brkga $(BIN)/test_rng
 
 clean:
 	rm -fv $(OBJ)/*.o
+	rm -fv $(BIN)/*.exe
 

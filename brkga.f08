@@ -40,8 +40,8 @@ contains
     allocate(key_pool(key_size, pool_size), stat=err)
     call check_err(err, "Failed to allocate key pool.")    
     
-    elite_pool_end = 1 + floor(pool_size / elite_pool_fraction)
-    mutant_pool_start = elite_pool_end + floor(pool_size / mutant_pool_fraction)
+    elite_pool_end = floor(pool_size * elite_pool_fraction)
+    mutant_pool_start = ceiling(pool_size - pool_size * mutant_pool_fraction)
 
     write(*,*) "BRKGA Config"
     write(*,*) "pool_size", pool_size
@@ -69,15 +69,15 @@ contains
 
     do i = 1, n
        min_idx = minloc(key(key_order(i:n)), dim=1) + i - 1 !Correct index for slicing.
-       write(*,*) "DEBUG key(key_order(i:n))"
-       write(*,*) key(key_order(i:n))
-       write(*,*) "DEBUG min_idx", min_idx
+       ! write(*,*) "DEBUG key(key_order(i:n))"
+       ! write(*,*) key(key_order(i:n))
+       ! write(*,*) "DEBUG min_idx", min_idx
 
        tmp = key_order(i)
        key_order(i) = key_order(min_idx)
        key_order(min_idx) = tmp
-       write(*,*) "DEBUG key_order after swap i", i, "and min_idx", min_idx
-       write(*,*) key_order
+       ! write(*,*) "DEBUG key_order after swap i", i, "and min_idx", min_idx
+       ! write(*,*) key_order
     end do
   end subroutine brkga_sort_key
 end module brkga
