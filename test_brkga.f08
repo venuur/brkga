@@ -1,13 +1,15 @@
 module brkga_tsp
   use const, only: dp
   use check_util, only: check_err
-  use brkga, only: brkga_solve, brkga_sort_key
+  use brkga, only: brkga_solve
+  use sort, only: minloc_sort_order
+  use tsp, only: tsp_cost
   use pretty_print
   implicit none
   private
   public brkga_tsp_solve, brkga_tsp_decode_solution
   
-  real(dp), parameter :: test_key(5) = [ &
+  real(dp) :: test_key(5) = [ &
        0.3_dp, 0.1_dp, 0.5_dp, 0.05_dp, 0.9_dp ]
   
 contains
@@ -32,7 +34,7 @@ contains
     allocate(solution_key(key_size), stat=err)
     call check_err(err, "Failed to allocate solution key.")
 
-    call brkga_solve(solution_key)
+    call brkga_solve(tsp_decode, solution_key)
     call brkga_tsp_decode_solution(solution_key, solution)
     
     return
@@ -40,7 +42,7 @@ contains
   contains
 
     real(dp) function tsp_decode(key) result(key_value)
-      real(dp), intent(in) :: key(:)
+      real(dp), intent(inout) :: key(:)
 
       ! Local Variables
       integer, allocatable :: key_solution(:)
@@ -55,10 +57,7 @@ contains
       print *, "DEBUG key", key
       print *, "DEBUG key_solution", key_solution
 
-      key_value = 0.0
-      do i = 1, n
-         key_value = key_value + cost_matrix(key_solution(i), key_solution(i+1))
-      end do
+      key_value = tsp_cost(key_solution, cost_matrix)
 
       return
     end function tsp_decode
@@ -68,7 +67,7 @@ contains
     real(dp), intent(in) :: key(:)
     integer, intent(out) :: solution(:)
 
-    call brkga_sort_key(key, solution)
+    call minloc_sort_order(key, solution)
     solution(size(key)+1) = solution(1)
   end subroutine brkga_tsp_decode_solution
 end module brkga_tsp
@@ -77,6 +76,7 @@ end module brkga_tsp
 program test_brkga
   use const, only: dp
   use brkga_tsp, only: brkga_tsp_solve, brkga_tsp_decode_solution
+  use tsp, only: tsp_cost
   implicit none
   
   real(dp), parameter :: test_tsp_cost_matrix(5,5) = reshape( [ &
@@ -87,10 +87,13 @@ program test_brkga
        17.0_dp,18.0_dp,19.0_dp,20.0_dp, 0.0_dp ], &
        shape(test_tsp_cost_matrix), order=[2,1])
   integer, parameter :: test_tsp_optimal_solution(6) = [1, 2, 3, 4, 5, 1]
+  integer :: test_tsp_optimal_objective
   
   real(dp), parameter :: test_key(5) = [0.3_dp,0.1_dp,0.5_dp,0.05_dp,0.9_dp]
   integer, parameter :: test_key_tsp_solution(6) = [4,2,1,3,5,4]
   integer :: test_tsp_decode_sol(6)
+
+  test_tsp_optimal_objective = tsp_cost(test_tsp_optimal_solution, test_tsp_cost_matrix)
 
   call brkga_tsp_decode_solution(test_key, test_tsp_decode_sol)
   print *, "test_key", test_key
@@ -98,6 +101,11 @@ program test_brkga
   print *, "test_key_tsp_solution", test_key_tsp_solution
 
   call brkga_tsp_solve(test_tsp_cost_matrix, test_tsp_decode_sol)
+
+  print *, "test_tsp_optimal_solution", test_tsp_optimal_solution
+  print *, "test_tsp_optimal_objective", test_tsp_optimal_objective
+  print *, "test_tsp_decode_sol", test_tsp_decode_sol
+  print *, "test_tsp_dec_solution", tsp_cost(test_tsp_optimal_solution, test_tsp_cost_matrix)
 
   print *, "Finished."
 end program test_brkga

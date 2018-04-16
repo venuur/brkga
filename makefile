@@ -14,24 +14,33 @@ $(OBJ)/%.mod: $(OBJ)/%.o
 $(OBJ)/rng.o: $(SRC)/rng.f08 $(OBJ)/const.mod
 	$(COMPILE) -c $< -o $@
 
+$(OBJ)/tsp.o: $(SRC)/tsp.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/pretty_print.mod
+
 $(OBJ)/pretty_print.o: $(SRC)/pretty_print.f08 $(OBJ)/const.mod
 	$(COMPILE) -c $< -o $@
 
-$(OBJ)/brkga.o: $(SRC)/brkga.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod
+$(OBJ)/brkga.o: $(SRC)/brkga.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/sort.mod
 	$(COMPILE) -c $< -o $@
 
-$(OBJ)/test_brkga.o: $(SRC)/test_brkga.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/pretty_print.mod $(OBJ)/brkga.mod
+$(OBJ)/test_brkga.o: $(SRC)/test_brkga.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/pretty_print.mod $(OBJ)/brkga.mod $(OBJ)/sort.mod $(OBJ)/tsp.mod
 	$(COMPILE) -c $< -o $@
 
-$(BIN)/test_brkga: $(OBJ)/test_brkga.o $(OBJ)/const.o $(OBJ)/check_util.o $(OBJ)/pretty_print.o $(OBJ)/brkga.o
+$(BIN)/test_tsplib_read.o: $(SRC)/test_tsplib_read.f08 $(OBJ)/const.mod $(OBJ)/tsp.mod $(OBJ)/pretty_print.mod
+	$(COMPILE) -c $< -o $@
+
+$(BIN)/test_brkga: $(OBJ)/test_brkga.o $(OBJ)/const.o $(OBJ)/check_util.o $(OBJ)/pretty_print.o $(OBJ)/brkga.o $(OBJ)/sort.o $(OBJ)/tsp.o
 	$(LINK) $^ -o $@
 
 $(BIN)/test_rng: $(OBJ)/test_rng.o $(OBJ)/const.o
 	$(LINK) $^ -o $@
 
-test: $(BIN)/test_brkga $(BIN)/test_rng
+$(BIN)/test_tsplib_read: $(OBJ)/test_tsplib_read.o $(OBJ)/const.o $(OBJ)/tsp.o $(OBJ)/check_util.o $(OBJ)/pretty_print.o
+	$(LINK) $^ -o $@
+
+test: $(BIN)/test_brkga $(BIN)/test_rng $(BIN)/test_tsplib_read
 
 clean:
 	rm -fv $(OBJ)/*.o
+	rm -fv $(OBJ)/*.mod
 	rm -fv $(BIN)/*.exe
 
