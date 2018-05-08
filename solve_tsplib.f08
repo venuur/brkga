@@ -11,7 +11,7 @@ program solve_tsplib
   integer :: argstat
 
   ! TSP data
-  real(dp), allocatable :: cost_mat
+  real(dp), allocatable :: cost_mat(:,:)
 
   ! Error handling
   integer :: err
