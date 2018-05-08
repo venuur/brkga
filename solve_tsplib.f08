@@ -1,7 +1,8 @@
 program solve_tsplib
   use const, only: dp
   use check_util, only: check_err
-  use tsp, only: tsp_read_tsplib
+  use tsp, only: tsp_read_tsplib, tsp_cost
+  use brkga_tsp, only: brkga_tsp_solve
   implicit none
 
   ! CLI
@@ -12,6 +13,8 @@ program solve_tsplib
 
   ! TSP data
   real(dp), allocatable :: cost_mat(:,:)
+  integer :: n_stops
+  integer, allocatable :: tsp_tour(:)
 
   ! Error handling
   integer :: err
@@ -34,7 +37,15 @@ program solve_tsplib
 
   call tsp_read_tsplib(argtsplib, cost_mat)
 
-  
-  
+  n_stops = size(cost_mat, dim=1)
+  allocate(tsp_tour(n_stops+1), stat=err)
+  call check_err(err, "Failed to allocate tsp_tour")
+
+  call brkga_tsp_solve(cost_mat, tsp_tour)
+
+  print *, "TSP Tour"
+  print *, "Cost:", tsp_cost(tsp_tour, cost_mat)
+  print *, "Stops:"
+  print *, tsp_tour  
 
 end program solve_tsplib

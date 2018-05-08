@@ -8,8 +8,8 @@ module brkga
   public brkga_solve, brkga_set_seed
 
   integer, allocatable :: brkga_seed(:)
-  integer :: brkga_n_iter = 1
-  integer :: pool_size = 10
+  integer :: brkga_n_iter = 10000
+  integer :: pool_size = 10000
   real(dp) :: elite_pool_fraction = 0.3_dp
   real(dp) :: mutant_pool_fraction = 0.1_dp
   real(dp) :: elite_crossover_p = 0.7_dp
@@ -82,8 +82,8 @@ contains
 
     allocate(parent_unif(regular_pool_size), stat=err)
     call check_err(err, "Failed to allocate parent probability.")
-    write(*,*) "DEBUG just allocated parent_unif"
-    write(*,*) parent_unif
+    ! write(*,*) "DEBUG just allocated parent_unif"
+    ! write(*,*) parent_unif
 
     allocate(elite_parent_idx(regular_pool_size), stat=err)
     call check_err(err, "Failed to allocate elite parent index.")
@@ -110,8 +110,8 @@ contains
     end if
 
     call random_number(key_pool)
-    write(*,*) "DEBUG key_pool"
-    call print_matrix(key_pool)
+    ! write(*,*) "DEBUG key_pool"
+    ! call print_matrix(key_pool)
 
     do iter = 1, brkga_n_iter
        ! Score pool.
@@ -119,56 +119,56 @@ contains
           pool_score(i) = decode(key_pool(:, i))
        end do
 
-       write(*,*) "DEBUG pool_score", pool_score
+       ! write(*,*) "DEBUG pool_score", pool_score
 
        ! Sort to find elite pool.
        call minloc_sort_order(pool_score, pool_order)
        pool_buf = key_pool(:, pool_order)
-       write(*,*) "DEBUG key_pool"
-       call print_matrix(key_pool)
-       write(*,*) "DEBUG pool_buf"
-       call print_matrix(pool_buf)
+       ! write(*,*) "DEBUG key_pool"
+       ! call print_matrix(key_pool)
+       ! write(*,*) "DEBUG pool_buf"
+       ! call print_matrix(pool_buf)
        
        key_pool(:, :elite_pool_size) = pool_buf(:, :elite_pool_size)
-       write(*,*) "DEBUG key_pool"
-       call print_matrix(key_pool)
-       write(*,*) "DEBUG pool_buf"
-       call print_matrix(pool_buf)
+       ! write(*,*) "DEBUG key_pool"
+       ! call print_matrix(key_pool)
+       ! write(*,*) "DEBUG pool_buf"
+       ! call print_matrix(pool_buf)
        
 
        
        ! Select parents.
        call random_number(parent_unif)
        elite_parent_idx = 1 + floor(elite_pool_size*parent_unif)
-       write(*,*) "DEBUG parent_unif", parent_unif
-       write(*,*) "DEBUG elite_parent_idx", elite_parent_idx
+       ! write(*,*) "DEBUG parent_unif", parent_unif
+       ! write(*,*) "DEBUG elite_parent_idx", elite_parent_idx
 
        call random_number(parent_unif)
        regular_parent_idx = 1 + elite_pool_size + floor(nonelite_pool_size*parent_unif)
-       write(*,*) "DEBUG parent_unif", parent_unif
-       write(*,*) "DEBUG regular_parent_idx", regular_parent_idx
+       ! write(*,*) "DEBUG parent_unif", parent_unif
+       ! write(*,*) "DEBUG regular_parent_idx", regular_parent_idx
 
        ! Perform crossover to generate next generation.
        do i = elite_pool_size+1, mutant_pool_start-1
           call random_number(crossover_p)
           k = i - elite_pool_size
-          write(*,*) "DEBUG crossover i", i
-          write(*,*) "DEBUG crossover_p", crossover_p
-          write(*,*) "DEBUG elite_parent", pool_buf(:, elite_parent_idx(k))
-          write(*,*) "DEBUG regular_parent", pool_buf(:, regular_parent_idx(k))
+          ! write(*,*) "DEBUG crossover i", i
+          ! write(*,*) "DEBUG crossover_p", crossover_p
+          ! write(*,*) "DEBUG elite_parent", pool_buf(:, elite_parent_idx(k))
+          ! write(*,*) "DEBUG regular_parent", pool_buf(:, regular_parent_idx(k))
           where (crossover_p >= elite_crossover_p)
              key_pool(:, i) = pool_buf(:, elite_parent_idx(k))
           elsewhere
              key_pool(:, i) = pool_buf(:, regular_parent_idx(k))
           end where
-          write(*,*) "DEBUG key_pool(:,i)", key_pool(:,i)
+          ! write(*,*) "DEBUG key_pool(:,i)", key_pool(:,i)
        end do
        
        ! Create mutants.
        call random_number(key_pool(:, mutant_pool_start:))
 
-       write(*, *) "DEBUG key_pool post mutants"
-       call print_matrix(key_pool)
+       ! write(*, *) "DEBUG key_pool post mutants"
+       ! call print_matrix(key_pool)
     end do
 
     ! Score pool.

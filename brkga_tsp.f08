@@ -25,11 +25,11 @@ contains
 
     key_size = size(solution) - 1
 
-    print *, "DEBUG cost_matrix"
-    call print_matrix(cost_matrix)
+    ! print *, "DEBUG cost_matrix"
+    ! call print_matrix(cost_matrix)
     
     key_value = tsp_decode(test_key)
-    print *, "DEBUG tsp_decode(test_key)", key_value
+    ! print *, "DEBUG tsp_decode(test_key)", key_value
 
     allocate(solution_key(key_size), stat=err)
     call check_err(err, "Failed to allocate solution key.")
@@ -54,8 +54,8 @@ contains
       call check_err(err, "Failed to allocate key solution.")
 
       call brkga_tsp_decode_solution(key, key_solution)
-      print *, "DEBUG key", key
-      print *, "DEBUG key_solution", key_solution
+      ! print *, "DEBUG key", key
+      ! print *, "DEBUG key_solution", key_solution
 
       key_value = tsp_cost(key_solution, cost_matrix)
 
