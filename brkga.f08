@@ -5,19 +5,25 @@ module brkga
   use pretty_print, only: print_matrix
   implicit none
   private
-  public brkga_solve, brkga_set_seed
+  public brkga_solve, brkga_set_seed, brkga_env
 
-  integer, allocatable :: brkga_seed(:)
-  integer :: brkga_n_iter = 10000
-  integer :: pool_size = 10000
-  real(dp) :: elite_pool_fraction = 0.3_dp
-  real(dp) :: mutant_pool_fraction = 0.1_dp
-  real(dp) :: elite_crossover_p = 0.7_dp
-
-  real(dp), allocatable :: key_pool(:,:)
-  ! key_pool dims: key, pop_id
-  real(dp), allocatable :: pool_score(:) 
-  ! pool_score dims: pop_id
+  type brkga_env
+     ! Contains algorithm configurations and persistent data.
+     integer, allocatable :: seed(:)
+     integer :: n_iter = 100
+     integer :: pool_size = 100
+     
+     real(dp) :: elite_fraction = 0.3_dp
+     real(dp) :: mutant_fraction = 0.1_dp
+     real(dp) :: elite_crossover_p = 0.7_dp
+     
+     real(dp), allocatable :: key_pool(:,:)
+     ! key_pool dims: key, pop_id
+     real(dp), allocatable :: pool_score(:) 
+     ! pool_score dims: pop_id
+  end type brkga_env
+  
+     
   
   abstract interface
      ! Input arg key can be modified by decode to allow local search
@@ -30,7 +36,8 @@ module brkga
 
 contains
 
-  subroutine brkga_solve(decode, solution_key)
+  subroutine brkga_solve(env, decode, solution_key)
+    type(brkga_env), intent(inout) :: env
     procedure(brkga_decode_key_value) :: decode
     real(dp), intent(out) :: solution_key(:)
 
@@ -56,25 +63,25 @@ contains
     key_size = size(solution_key)
 
     ! Initialize Globals
-    if (allocated(key_pool)) deallocate(key_pool)
-    allocate(key_pool(key_size, pool_size), stat=err)
+    if (allocated(env%key_pool)) deallocate(env%key_pool)
+    allocate(env%key_pool(key_size, env%pool_size), stat=err)
     call check_err(err, "Failed to allocate key pool.")
 
-    if (allocated(pool_score)) deallocate(pool_score)
-    allocate(pool_score(pool_size), stat=err)
+    if (allocated(env%pool_score)) deallocate(env%pool_score)
+    allocate(env%pool_score(env%pool_size), stat=err)
     call check_err(err, "Failed to allocate pool score.")
     
-    elite_pool_size = floor(pool_size * elite_pool_fraction)
-    mutant_pool_start = ceiling(pool_size - pool_size * mutant_pool_fraction)
-    mutant_pool_size = pool_size - mutant_pool_start + 1
+    elite_pool_size = floor(env%pool_size * env%elite_fraction)
+    mutant_pool_start = ceiling(env%pool_size * (1 - env%mutant_fraction))
+    mutant_pool_size = env%pool_size - mutant_pool_start + 1
     regular_pool_size = (mutant_pool_start-1) - elite_pool_size
-    nonelite_pool_size = pool_size - elite_pool_size
+    nonelite_pool_size = env%pool_size - elite_pool_size
     
     ! Initialize Locals
-    allocate(pool_order(pool_size), stat=err)
+    allocate(pool_order(env%pool_size), stat=err)
     call check_err(err, "Failed to allocate pool order.")
 
-    allocate(pool_buf(key_size, pool_size), stat=err)
+    allocate(pool_buf(key_size, env%pool_size), stat=err)
     call check_err(err, "Failed to allocate elite pool buffer.")
 
     allocate(crossover_p(key_size), stat=err)
@@ -93,45 +100,45 @@ contains
     
 
     write(*,*) "BRKGA Config"
-    write(*,*) "pool_size", pool_size
-    write(*,*) "elite_pool_fraction", elite_pool_fraction
-    write(*,*) "mutant_pool_fraction", mutant_pool_fraction
-    write(*,*) "elite_crossover_p", elite_crossover_p
+    write(*,*) "env%pool_size", env%pool_size
+    write(*,*) "env%elite_fraction", env%elite_fraction
+    write(*,*) "env%mutant_fraction", env%mutant_fraction
+    write(*,*) "env%elite_crossover_p", env%elite_crossover_p
 
     write(*,*) "DEBUG elite_pool_size", elite_pool_size
     write(*,*) "DEBUG mutant_pool_start", mutant_pool_start
     write(*,*) "DEBUG regular_pool_size", regular_pool_size
 
     ! Initialize pool.
-    if (allocated(brkga_seed)) then
-       call random_seed(put=brkga_seed)
+    if (allocated(env%seed)) then
+       call random_seed(put=env%seed)
     else
        call random_seed()
     end if
 
-    call random_number(key_pool)
-    ! write(*,*) "DEBUG key_pool"
-    ! call print_matrix(key_pool)
+    call random_number(env%key_pool)
+    ! write(*,*) "DEBUG env%key_pool"
+    ! call print_matrix(env%key_pool)
 
-    do iter = 1, brkga_n_iter
+    do iter = 1, env%n_iter
        ! Score pool.
-       do i = 1, pool_size
-          pool_score(i) = decode(key_pool(:, i))
+       do i = 1, env%pool_size
+          env%pool_score(i) = decode(env%key_pool(:, i))
        end do
 
-       ! write(*,*) "DEBUG pool_score", pool_score
+       ! write(*,*) "DEBUG env%pool_score", env%pool_score
 
        ! Sort to find elite pool.
-       call minloc_sort_order(pool_score, pool_order)
-       pool_buf = key_pool(:, pool_order)
-       ! write(*,*) "DEBUG key_pool"
-       ! call print_matrix(key_pool)
+       call minloc_sort_order(env%pool_score, pool_order)
+       pool_buf = env%key_pool(:, pool_order)
+       ! write(*,*) "DEBUG env%key_pool"
+       ! call print_matrix(env%key_pool)
        ! write(*,*) "DEBUG pool_buf"
        ! call print_matrix(pool_buf)
        
-       key_pool(:, :elite_pool_size) = pool_buf(:, :elite_pool_size)
-       ! write(*,*) "DEBUG key_pool"
-       ! call print_matrix(key_pool)
+       env%key_pool(:, :elite_pool_size) = pool_buf(:, :elite_pool_size)
+       ! write(*,*) "DEBUG env%key_pool"
+       ! call print_matrix(env%key_pool)
        ! write(*,*) "DEBUG pool_buf"
        ! call print_matrix(pool_buf)
        
@@ -156,47 +163,69 @@ contains
           ! write(*,*) "DEBUG crossover_p", crossover_p
           ! write(*,*) "DEBUG elite_parent", pool_buf(:, elite_parent_idx(k))
           ! write(*,*) "DEBUG regular_parent", pool_buf(:, regular_parent_idx(k))
-          where (crossover_p >= elite_crossover_p)
-             key_pool(:, i) = pool_buf(:, elite_parent_idx(k))
+          where (crossover_p >= env%elite_crossover_p)
+             env%key_pool(:, i) = pool_buf(:, elite_parent_idx(k))
           elsewhere
-             key_pool(:, i) = pool_buf(:, regular_parent_idx(k))
+             env%key_pool(:, i) = pool_buf(:, regular_parent_idx(k))
           end where
-          ! write(*,*) "DEBUG key_pool(:,i)", key_pool(:,i)
+          ! write(*,*) "DEBUG env%key_pool(:,i)", env%key_pool(:,i)
        end do
        
        ! Create mutants.
-       call random_number(key_pool(:, mutant_pool_start:))
+       call random_number(env%key_pool(:, mutant_pool_start:))
 
-       ! write(*, *) "DEBUG key_pool post mutants"
-       ! call print_matrix(key_pool)
+       ! write(*, *) "DEBUG env%key_pool post mutants"
+       ! call print_matrix(env%key_pool)
     end do
 
     ! Score pool.
-    do i = 1, pool_size
-       pool_score(i) = decode(key_pool(:, i))
+    do i = 1, env%pool_size
+       env%pool_score(i) = decode(env%key_pool(:, i))
     end do
-    write(*,*) "DEBUG pool_score", pool_score
+    write(*,*) "DEBUG env%pool_score", env%pool_score
        
 
     ! Sort to find elite pool.
-    call minloc_sort_order(pool_score, pool_order)
-    pool_buf = key_pool(:, pool_order)
-    key_pool = pool_buf
+    call minloc_sort_order(env%pool_score, pool_order)
+    pool_buf = env%key_pool(:, pool_order)
+    env%key_pool = pool_buf
     
     ! Return best
-    solution_key = key_pool(:, 1)
+    solution_key = env%key_pool(:, 1)
     return
   end subroutine brkga_solve
   
-  subroutine brkga_set_seed(seed)
-    integer :: seed(:)
+  subroutine brkga_set_seed(env, seed)
+    type(brkga_env), intent(inout) :: env
+    integer, intent(in) :: seed(:)
 
     ! Locals
     integer :: err
     
-    if (allocated(brkga_seed)) deallocate(brkga_seed)
-    allocate(brkga_seed(size(seed)), stat=err)
+    if (allocated(env%seed)) deallocate(env%seed)
+    allocate(env%seed(size(seed)), stat=err)
     call check_err(err, "Failed to allocate BRKGA seed")
-    brkga_seed = seed
+    env%seed = seed
   end subroutine brkga_set_seed
+
+  subroutine brkga_set_pop_params(env, elite_fraction, mutant_fraction, elite_crossover_p)
+    type(brkga_env), intent(inout) :: env
+    real(dp), intent(in) :: elite_fraction
+    real(dp), intent(in) :: mutant_fraction
+    real(dp), intent(in) :: elite_crossover_p
+
+    env%elite_fraction = elite_fraction
+    env%mutant_fraction = mutant_fraction
+    env%elite_crossover_p = elite_crossover_p
+  end subroutine brkga_set_pop_params
+
+  subroutine brkga_set_run_params(env, n_iter, pool_size)
+    type(brkga_env), intent(inout) :: env
+    integer, intent(in) :: n_iter
+    integer, intent(in) :: pool_size
+
+    env%n_iter = n_iter
+    env%pool_size = pool_size
+  end subroutine brkga_set_run_params
+  
 end module brkga

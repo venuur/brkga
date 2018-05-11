@@ -1,7 +1,7 @@
 module brkga_tsp
   use const, only: dp
   use check_util, only: check_err
-  use brkga, only: brkga_solve
+  use brkga, only: brkga_solve, brkga_env
   use sort, only: minloc_sort_order
   use tsp, only: tsp_cost
   use pretty_print, only: print_matrix
@@ -13,7 +13,8 @@ module brkga_tsp
        0.3_dp, 0.1_dp, 0.5_dp, 0.05_dp, 0.9_dp ]
   
 contains
-  subroutine brkga_tsp_solve(cost_matrix, solution)
+  subroutine brkga_tsp_solve(env, cost_matrix, solution)
+    type(brkga_env), intent(inout) :: env
     real(dp), intent(in) :: cost_matrix(:,:)
     integer, intent(out) :: solution(:)
 
@@ -34,7 +35,7 @@ contains
     allocate(solution_key(key_size), stat=err)
     call check_err(err, "Failed to allocate solution key.")
 
-    call brkga_solve(tsp_decode, solution_key)
+    call brkga_solve(env, tsp_decode, solution_key)
     call brkga_tsp_decode_solution(solution_key, solution)
     
     return

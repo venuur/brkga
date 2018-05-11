@@ -1,5 +1,6 @@
 program test_brkga
   use const, only: dp
+  use brkga, only: brkga_env
   use brkga_tsp, only: brkga_tsp_solve, brkga_tsp_decode_solution
   use tsp, only: tsp_cost
   implicit none
@@ -18,6 +19,8 @@ program test_brkga
   integer, parameter :: test_key_tsp_solution(6) = [4,2,1,3,5,4]
   integer :: test_tsp_decode_sol(6)
 
+  type(brkga_env) :: env
+
   test_tsp_optimal_objective = tsp_cost(test_tsp_optimal_solution, test_tsp_cost_matrix)
 
   call brkga_tsp_decode_solution(test_key, test_tsp_decode_sol)
@@ -25,7 +28,7 @@ program test_brkga
   print *, "test_tsp_decode_sol", test_tsp_decode_sol
   print *, "test_key_tsp_solution", test_key_tsp_solution
 
-  call brkga_tsp_solve(test_tsp_cost_matrix, test_tsp_decode_sol)
+  call brkga_tsp_solve(env, test_tsp_cost_matrix, test_tsp_decode_sol)
 
   print *, "test_tsp_optimal_solution", test_tsp_optimal_solution
   print *, "test_tsp_optimal_objective", test_tsp_optimal_objective

@@ -32,13 +32,16 @@ $(OBJ)/brkga.o: $(SRC)/brkga.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/s
 $(OBJ)/brkga_tsp.o: $(SRC)/brkga_tsp.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/brkga.mod $(OBJ)/sort.mod $(OBJ)/tsp.mod $(OBJ)/pretty_print.mod
 	$(COMPILE) -c $< -o $@
 
+$(OBJ)/test_rng.o: $(SRC)/test_rng.f08 $(OBJ)/const.mod
+	$(COMPILE) -c $< -o $@
+
 $(OBJ)/test_brkga.o: $(SRC)/test_brkga.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/pretty_print.mod $(OBJ)/brkga.mod $(OBJ)/sort.mod $(OBJ)/tsp.mod $(OBJ)/brkga_tsp.mod
 	$(COMPILE) -c $< -o $@
 
 $(OBJ)/test_tsplib_read.o: $(SRC)/test_tsplib_read.f08 $(OBJ)/const.mod $(OBJ)/tsp.mod $(OBJ)/pretty_print.mod
 	$(COMPILE) -c $< -o $@
 
-$(OBJ)/solve_tsplib.o: $(SRC)/solve_tsplib.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/tsp.mod $(OBJ)/pretty_print.mod $(OBJ)/brkga_tsp.mod
+$(OBJ)/solve_tsplib.o: $(SRC)/solve_tsplib.f08 $(OBJ)/const.mod $(OBJ)/check_util.mod $(OBJ)/tsp.mod $(OBJ)/pretty_print.mod $(OBJ)/brkga_tsp.mod $(OBJ)/brkga.mod
 	$(COMPILE) -c $< -o $@
 
 $(BIN)/test_brkga: $(OBJ)/test_brkga.o $(OBJ)/const.o $(OBJ)/check_util.o $(OBJ)/pretty_print.o $(OBJ)/brkga.o $(OBJ)/sort.o $(OBJ)/tsp.o $(OBJ)/brkga_tsp.o
